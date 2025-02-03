@@ -1,6 +1,8 @@
 # Implementing CLI Functionality for Semantra
 
-## Python Setup Adjustments
+## Initial cleanup
+
+### Python Setup Adjustments
 
 To get the CLI functionality working properly, I had to tweak some Python setup configurations. First, `pyproject.toml` needed to run in editable mode, which required upgrading `setuptools` to version 64 or higher.
 
@@ -18,7 +20,7 @@ from pdf import get_pdf_content
 
 Not entirely sure why relative imports were used, but everything seems to work fine after switching.
 
-## Fixing Frontend File Retrieval Issue
+### Fixing Frontend File Retrieval
 
 Semantra serves frontend files via symlink, using:
 
@@ -61,8 +63,6 @@ With this, `query_by_queries_and_preferences()` acts as the main processor of th
 
 The `query()` method also called two other models, `annoy` via `queryann`, and `svm` via `querysvm`, I made similar adjustments to both these too, however it needs a lot of refactoring in my opinion.
 
-Next, the interface for the user.
-
 ### Handling Query Data
 
 The two relevant pieces of client data are:
@@ -82,7 +82,7 @@ For the CLI, constructing these is simple:
         return query_by_queries_and_preferences(queries, preferences)
 ```
 
-## Adding CLI Arguments
+### Adding CLI Arguments
 
 To make the tool work from the command line, I introduced two new arguments:
 
@@ -94,8 +94,6 @@ Now, running the following command saves results to `christmas.json`:
 ```sh
 python3 semantra/src/semantra/semantra.py semantra/The\ Rust\ Programming\ Language\ Chapter\ 3.pdf --no-server --search christmas --save-search-to christmas.json
 ```
-
-## Final Output
 
 Here's an excerpt from the generated `christmas.json` file:
 
