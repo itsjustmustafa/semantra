@@ -12,6 +12,7 @@
     type Preference,
     preferenceKey,
     type ParsedQuery,
+    type SearchResult,
   } from "./types";
   import PdfView from "./components/PdfView.svelte";
   import TabBar from "./components/TabBar.svelte";
@@ -38,6 +39,40 @@
   );
 
   $: updateFile(activeFile);
+
+function convertToCSV<T>(arr: T[], titles: string[], infoMapper: (obj: T, title: string) => string): string {
+  // Convert the titles into the header row
+  const header = titles.join(',');
+
+  const escapeCSVValue = (value: string) => {
+    // if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+      //   return `"${value.replace(/"/g, '""')}"`; // Escape quotes and wrap in double quotes
+      // }
+    let needsToBeInQuotes = false; 
+    value = value.replace("\n", " ");
+    value = value.replace("\r", " ");
+    
+    if (value.includes('"')) {
+      value = value.replace('"', 'DOUBLEQUOTE');
+      value = value.replace('DOUBLEQUOTE', '""');
+      needsToBeInQuotes = true;
+    }
+    if (value.includes(",")){
+      needsToBeInQuotes = true;
+    }
+    if(needsToBeInQuotes){
+      value = `"${value}"`;
+    }
+    return value;
+  };
+
+  const rows = arr.map(obj =>
+    titles.map(title => escapeCSVValue(infoMapper(obj, title))).join(',')
+  );
+
+  return `${header}\n${rows.join('\n')}`;
+}
+
 
   async function updateFile(file: File | null) {
     // Reset everything
@@ -78,13 +113,82 @@
   let pdfView: PdfView;
   let searchBar: SearchBar;
 
+  function searchResultInfoMapping(searchResult: SearchResult, title: string): string {
+    const mapping: Record<string, () => string> = {
+      filename: () => searchResult.filename,
+      text: () => searchResult.text,
+      distance: () => searchResult.distance.toString(),
+      query: () => searchResult.queries[0].query,
+      query_weight: () => searchResult.queries[0].weight.toString(),
+      index: () => searchResult.index.toString(),
+      offset_first: () => searchResult.offset[0].toString(),
+      offset_second: () => searchResult.offset[1].toString(),
+    };
+    return mapping[title]?.() ?? "";
+  }
+
+  function preferencesInfoMapping(preference: Preference, title: string): string {
+    const searchResult = preference.searchResult;
+    const searchResultInfo = searchResultInfoMapping(searchResult, title);
+    if(searchResultInfo !== ""){
+      return searchResultInfo;
+    }
+    
+    const mapping: Record<string, () => string> = {
+      weight: () => preference.weight.toString(),
+      // space for any other stuff
+    };
+
+    return mapping[title]?.() ?? "";
+  }
+
   function downloadSearchResult(){
-    const blob = new Blob([JSON.stringify(searchResultSet)], {type: 'application/json'});
+    const searchResultsCSV = convertToCSV(
+      searchResultSet.results[0][1], 
+      [
+        "filename",
+        "text",
+        "distance",
+        "query",
+        "query_weight",
+        "index",
+        "offset_first",
+        "offset_second"
+      ], 
+      searchResultInfoMapping);
+
+    const firstFileName = searchResultSet.results[0][0].split("/").toReversed()[0]
+    const fileName = `${currentSearchTerm} - (${firstFileName}).csv`;
+    downloadCSV(searchResultsCSV, fileName);
+  }
+
+  function downloadPreferences(){
+    const searchResultsCSV = convertToCSV(
+      Object.values(preferences), 
+      [
+        "filename",
+        "text",
+        "weight",
+        "distance",
+        "query",
+        "query_weight",
+        "index",
+        "offset_first",
+        "offset_second",
+      ], 
+      preferencesInfoMapping);
+
+    const firstFileName = searchResultSet.results[0][0].split("/").toReversed()[0]
+    const fileName = `${currentSearchTerm} - (${firstFileName}) (preferences).csv`;
+    downloadCSV(searchResultsCSV, fileName);
+  }
+
+  function downloadCSV(csvText: string, fileName: string){
+    const blob = new Blob([csvText], {type: 'text/csv'});
     const url = URL.createObjectURL(blob);
     const download_link = document.createElement("a");
     download_link.href = url;
-    const firstFileName = searchResultSet.results[0][0].split("/").toReversed()[0]
-    download_link.download = `${currentSearchTerm} - (${firstFileName}).json`;
+    download_link.download = fileName;
     download_link.click();
     URL.revokeObjectURL(url);
   }
@@ -239,12 +343,13 @@
   <header
     class="flex flex-row border-b-4 border-black py-4 px-8 max-lg:px-4 items-start"
   >
-    <h1 class="text-3xl font-mono font-bold inline-flex pr-6 mt-1">Semantra</h1>
+    <h1 class="text-3xl font-mono font-bold inline-flex pr-6 mt-1">Semantra 1.0</h1>
     <SearchBar
       bind:this={searchBar}
       {preferences}
       on:setPreference={(e) => setPreference(e.detail)}
       on:search={(e) => handleSearch(e.detail)}
+      on:savePreferencesToCSV={(e) => downloadPreferences()}
     />
   </header>
   <article class="flex flex-1 flex-row relative items-stretch">
@@ -255,7 +360,7 @@
       {preferences}
       on:setPreference={(e) => setPreference(e.detail)}
       on:navigate={(e) => jumpToResult(e.detail)}
-      on:exportToJson={(e) => downloadSearchResult()}
+      on:saveResultsToCSV={(e) => downloadSearchResult()}
       {activeFile}
       {filesByPath}
       {searchResultSet}

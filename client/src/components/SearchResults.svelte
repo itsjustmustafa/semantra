@@ -18,8 +18,8 @@
   
   const dispatch = createEventDispatcher();
 
-  function exportToJson() {
-    dispatch("exportToJson");
+  function saveResultsToCSV() {
+    dispatch("saveResultsToCSV");
   }
 
   let filterViewed = false;
@@ -154,14 +154,14 @@
       >
         {#if excerptView}
           Show file view
-        {:else}Show exercept view{/if}</button
+        {:else}Show excerpt view{/if}</button
       >
       <button
         class="button save-icon"
-        title="Save results to json"
-        on:click={()=> exportToJson()}
+        title="Save results to csv"
+        on:click={()=> saveResultsToCSV()}
       >
-      Save search results to a file
+      Save search results to csv
       </button>
     </div>
   </div>
@@ -298,5 +298,9 @@
 
   .unsearched {
     @apply pointer-events-none opacity-20 select-none;
+  }
+
+  button:hover{
+    outline: 1px solid blue;
   }
 </style>
