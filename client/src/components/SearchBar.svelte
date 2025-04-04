@@ -3,10 +3,6 @@
   import type { Preference } from "../types";
   const dispatch = createEventDispatcher();
 
-  function savePreferencesToCSV(){
-    dispatch("savePreferencesToCSV");
-  }
-
   export let preferences: { [key: string]: Preference };
 
   $: preferenceValues = Object.values(preferences).filter(
@@ -59,21 +55,11 @@
     />
     <button class="search-button" on:click={search}>Search</button>
   </div>
-  
+
   <div
-  class="max-h-24 overflow-y-auto -mb-2 mt-2"
-  bind:this={preferenceContainer}
+    class="max-h-24 overflow-y-auto -mb-2 mt-2"
+    bind:this={preferenceContainer}
   >
-    {#if preferenceValues.length > 0}
-  
-      <button
-        class="control-button save-icon"
-        title="Save preferences to csv"
-        on:click={() => savePreferencesToCSV()}
-      >
-        Save preferences to csv
-      </button>
-    {/if}
     {#each preferenceValues as preference}
       <button
         class="w-64 max-sm:w-40 truncate monospace rounded px-2 inline-block mr-2 mb-2 cursor"
@@ -101,23 +87,5 @@
     width: 25px;
     position: absolute;
     left: 10px;
-  }
-
-
-  .control-button {
-    @apply border border-black rounded bg-white p-1;
-    text-indent: -9999px;
-    width: 42px;
-    margin: 0 0 0 4px;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  .save-icon{
-    background-image: url("../download_preferences.png");
-    background-size: 70%;
-  }
-  button:hover{
-    outline: 1px solid blue;
   }
 </style>
