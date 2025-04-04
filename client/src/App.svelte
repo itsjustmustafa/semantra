@@ -79,7 +79,13 @@
   let searchBar: SearchBar;
 
   function downloadSearchResult(){
-    const blob = new Blob([JSON.stringify(searchResultSet)], {type: 'application/json'});
+    const queryObject = {
+      "searchResult": searchResultSet,
+      "preferences" : preferences,
+    }
+    console.log("Huh...");
+
+    const blob = new Blob([JSON.stringify(queryObject)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const download_link = document.createElement("a");
     download_link.href = url;

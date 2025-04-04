@@ -23,6 +23,7 @@ dependencies = [
   "tqdm>=4.65.0",
   "transformers>=4.27.4",
   "setuptools",
+  "PyQt5",
 ]
 description = "A semantic search CLI tool"
 name = "semantra"
